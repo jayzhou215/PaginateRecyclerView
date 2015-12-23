@@ -22,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
 
     recyclerView = (PaginateRecyclerView) findViewById(R.id.recycler_view);
     recyclerView.setOrientation(RecyclerView.VERTICAL);
-    recyclerView.setPaginateItemCount(10);
 
     adapter = new CheeseNameVerticalAdapter(cheeses);
     recyclerView.setAdapter(adapter);

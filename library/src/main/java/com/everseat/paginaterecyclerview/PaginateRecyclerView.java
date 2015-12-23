@@ -25,10 +25,11 @@ public class PaginateRecyclerView extends RecyclerView {
   private int velocitySlop;
   private int touchSlop;
 
-  private int paginateItemCount = 3;
-  private int lastScrollPosition = 0;
+  private int paginateItemCount = -1;
+  private int lastScrollPosition;
   private VelocityTracker velocityTracker;
   private boolean shouldPage;
+  private PaginateLayoutManager layoutManager;
 
   private static final String TAG = "PaginateRecyclerView";
 
@@ -56,7 +57,8 @@ public class PaginateRecyclerView extends RecyclerView {
   }
 
   /**
-   * Sets the number of items to page by. Default is 3.
+   * Sets the number of items to page by. By default, we paginate a page at a time
+   * based on the first N visible items in the RecyclerView.
    * @param paginateItemCount The number of items to page by
    */
   public void setPaginateItemCount(int paginateItemCount) {
@@ -77,10 +79,17 @@ public class PaginateRecyclerView extends RecyclerView {
   }
 
   @Override
+  public void setAdapter(Adapter adapter) {
+    lastScrollPosition = 0;
+    super.setAdapter(adapter);
+  }
+
+  @Override
   public void setLayoutManager(LayoutManager layout) {
     if (!(layout instanceof PaginateLayoutManager)) {
       throw new IllegalArgumentException("PaginateRecyclerView needs a PaginateLayoutManager!");
     }
+    layoutManager = (PaginateLayoutManager) layout;
     super.setLayoutManager(layout);
   }
 
@@ -154,7 +163,14 @@ public class PaginateRecyclerView extends RecyclerView {
 
         int scrollToPosition;
         if (shouldPage) {
-          scrollToPosition = (lastScrollPosition + (direction * paginateItemCount));
+          int skipCount;
+          if (paginateItemCount == -1) {
+            int averageChildSize = layoutManager.getAverageChildSize();
+            skipCount = (getWidth() / averageChildSize) * direction;
+          } else {
+            skipCount = paginateItemCount * direction;
+          }
+          scrollToPosition = (lastScrollPosition + skipCount);
         } else {
           scrollToPosition = lastScrollPosition;
         }
