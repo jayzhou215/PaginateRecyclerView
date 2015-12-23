@@ -21,9 +21,9 @@ public class PaginateRecyclerView extends RecyclerView {
   private int orientation;
 
   // View configs
-  private int touchSlop;
   private int maxFlingVelocity;
   private int velocitySlop;
+  private int touchSlop;
 
   private int paginateItemCount = 3;
   private int lastScrollPosition = 0;
@@ -48,11 +48,11 @@ public class PaginateRecyclerView extends RecyclerView {
   }
 
   private void init(Context context) {
-    ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
+    ViewConfiguration vc = ViewConfiguration.get(context);
     velocityTracker = VelocityTracker.obtain();
-    touchSlop = viewConfiguration.getScaledTouchSlop();
     maxFlingVelocity = getMaxFlingVelocity();
     velocitySlop = 200;
+    touchSlop = vc.getScaledTouchSlop();
   }
 
   /**
@@ -119,14 +119,14 @@ public class PaginateRecyclerView extends RecyclerView {
         float yVelocity = VelocityTrackerCompat.getYVelocity(velocityTracker, scrollPointerId);
 
         if (canScrollHorizontally && Math.abs(dx) > touchSlop) {
-          shouldPage = Math.abs(xVeclocity) > velocitySlop;
           scrollBy(dx, 0);
+          shouldPage = Math.abs(xVeclocity) > velocitySlop;
           lastTouchX = x;
         }
 
         if (canScrollVertically && Math.abs(dy) > touchSlop) {
-          shouldPage = Math.abs(yVelocity) > velocitySlop;
           scrollBy(0, dy);
+          shouldPage = Math.abs(yVelocity) > velocitySlop;
           lastTouchY = y;
         }
       } break;
@@ -152,10 +152,11 @@ public class PaginateRecyclerView extends RecyclerView {
           direction = dy / Math.abs(dy);
         }
 
-        int scrollToPosition = lastScrollPosition;
-
+        int scrollToPosition;
         if (shouldPage) {
           scrollToPosition = (lastScrollPosition + (direction * paginateItemCount));
+        } else {
+          scrollToPosition = lastScrollPosition;
         }
 
         smoothScrollToPosition(scrollToPosition);
