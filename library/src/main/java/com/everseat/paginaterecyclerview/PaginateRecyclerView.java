@@ -18,6 +18,7 @@ public class PaginateRecyclerView extends RecyclerView {
   private int initialTouchX, initialTouchY;
   private int lastTouchX, lastTouchY;
   private int scrollPointerId;
+  private int orientation;
 
   // View configs
   private int touchSlop;
@@ -67,7 +68,12 @@ public class PaginateRecyclerView extends RecyclerView {
    * @param orientation Orientation of the LayoutManager
    */
   public void setOrientation(int orientation) {
+    this.orientation = orientation;
     setLayoutManager(new PaginateLayoutManager(getContext(), orientation, false));
+  }
+
+  public int getOrientation() {
+    return orientation;
   }
 
   @Override
