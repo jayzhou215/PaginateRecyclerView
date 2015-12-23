@@ -154,10 +154,10 @@ public class PaginateRecyclerView extends RecyclerView {
         int dy = initialTouchY - y;
 
         int direction = 0;
-        if (canScrollHorizontally) {
+        if (canScrollHorizontally && Math.abs(dx) > touchSlop) {
           direction = dx / Math.abs(dx);
         }
-        if (canScrollVertically) {
+        if (canScrollVertically && Math.abs(dy) > touchSlop) {
           direction = dy / Math.abs(dy);
         }
 
