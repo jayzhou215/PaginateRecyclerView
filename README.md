@@ -19,7 +19,7 @@ allprojects {
 Then include this line in your dependencies block...
 
 ```
-compile 'com.github.Everseat:PaginateRecyclerView:0.2'
+compile 'com.github.everseat:PaginateRecyclerView:0.2'
 ```
 
 # Usage
