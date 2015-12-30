@@ -3,7 +3,27 @@ A RecyclerView that can paginate it's content.
 
 ![demo](http://i.giphy.com/JDBXYNEVWgkOk.gif)
 
+# Install
+
+To add this library to your project, you must add the JitPack repo to your root build.gradle file...
+
+```groovy
+allprojects {
+ repositories {
+    ...
+    maven { url "https://jitpack.io" }
+ }
+}
+```
+
+Then include this line in your dependencies block...
+
+```
+compile 'com.github.Everseat:PaginateRecyclerView:0.2'
+```
+
 # Usage
+
 Simply include in your layout like so...
 
 ```xml
