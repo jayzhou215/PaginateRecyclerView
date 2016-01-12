@@ -94,6 +94,13 @@ public class PaginateRecyclerView extends RecyclerView {
   }
 
   @Override
+  public boolean onInterceptTouchEvent(MotionEvent e) {
+    initialTouchX = lastTouchX = (int) e.getX();
+    initialTouchY = lastTouchY = (int) e.getY();
+    return super.onInterceptTouchEvent(e);
+  }
+
+  @Override
   public boolean onTouchEvent(MotionEvent e) {
     final int action = MotionEventCompat.getActionMasked(e);
 
