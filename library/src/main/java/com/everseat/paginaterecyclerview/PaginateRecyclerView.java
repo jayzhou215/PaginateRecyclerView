@@ -9,6 +9,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
+import android.view.View;
 import android.view.ViewConfiguration;
 
 /**
@@ -187,5 +188,37 @@ public class PaginateRecyclerView extends RecyclerView {
       } break;
     }
     return true;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Public API
+  /////////////////////////////////////////////////////////////////////////////
+
+  public void centerItem(int position) {
+    int orientation = getOrientation();
+    ViewHolder viewHolder = findViewHolderForAdapterPosition(position);
+    View itemView = viewHolder.itemView;
+
+    if (orientation == HORIZONTAL) {
+      centerItemHorizontally(itemView);
+    } else {
+      centerItemVertically(itemView);
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Helper methods
+  /////////////////////////////////////////////////////////////////////////////
+
+  private void centerItemHorizontally(View itemView) {
+    int width = getWidth();
+    int x = itemView.getLeft() - ((width / 2) - (itemView.getWidth() / 2));
+    smoothScrollBy(x, 0);
+  }
+
+  private void centerItemVertically(View itemView) {
+    int height = getHeight();
+    int y = itemView.getTop() - ((height / 2) - (itemView.getHeight() / 2));
+    smoothScrollBy(0, y);
   }
 }

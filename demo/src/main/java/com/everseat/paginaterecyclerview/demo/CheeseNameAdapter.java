@@ -1,22 +1,26 @@
 package com.everseat.paginaterecyclerview.demo;
 
-import android.content.Context;
 import android.graphics.Color;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.Toast;
 
 import java.util.List;
 
 public abstract class CheeseNameAdapter extends RecyclerView.Adapter<CheeseNameViewHolder> {
-  private List<String> cheeseNames;
+  public interface ItemClickListener {
+    void onItemClicked(String name, int position);
+  }
+
+  private final List<String> cheeseNames;
+  @Nullable private ItemClickListener itemClickListener;
 
   public CheeseNameAdapter(List<String> cheeseNames) {
     this.cheeseNames = cheeseNames;
   }
 
   @Override
-  public void onBindViewHolder(CheeseNameViewHolder holder, int position) {
+  public void onBindViewHolder(CheeseNameViewHolder holder, final int position) {
     final String name = cheeseNames.get(position);
     holder.descriptionTextView.setText(name);
     if (position % 2 == 0) {
@@ -25,11 +29,12 @@ public abstract class CheeseNameAdapter extends RecyclerView.Adapter<CheeseNameV
       holder.itemView.setBackgroundColor(Color.parseColor("#9FDCFC"));
     }
 
-    final Context context = holder.itemView.getContext();
     holder.itemView.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Toast.makeText(context, name, Toast.LENGTH_SHORT).show();
+        if (itemClickListener != null) {
+          itemClickListener.onItemClicked(name, position);
+        }
       }
     });
   }
@@ -37,5 +42,9 @@ public abstract class CheeseNameAdapter extends RecyclerView.Adapter<CheeseNameV
   @Override
   public int getItemCount() {
     return cheeseNames.size();
+  }
+
+  public void setItemClickListener(@Nullable ItemClickListener listener) {
+    itemClickListener = listener;
   }
 }
