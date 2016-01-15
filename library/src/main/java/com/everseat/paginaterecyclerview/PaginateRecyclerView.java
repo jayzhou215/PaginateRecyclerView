@@ -187,11 +187,10 @@ public class PaginateRecyclerView extends RecyclerView implements GestureDetecto
 
   @Override
   public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-    int skipCount;
-
     boolean canScrollHorizontally = getLayoutManager().canScrollHorizontally();
     boolean canScrollVertically = getLayoutManager().canScrollVertically();
 
+    // Resolve fling direction
     int direction = 0;
     if (canScrollHorizontally && Math.abs(velocityX) > flingSlop) {
       direction = velocityX < 0 ? 1 : -1;
@@ -200,6 +199,8 @@ public class PaginateRecyclerView extends RecyclerView implements GestureDetecto
       direction = velocityY < 0 ? 1 : -1;
     }
 
+    // Calculate number of items to skip and total pages
+    int skipCount;
     if (paginateItemCount == -1) {
       int averageChildSize = layoutManager.getAverageChildSize();
       int size = canScrollHorizontally ? getWidth() : getHeight();
@@ -207,10 +208,27 @@ public class PaginateRecyclerView extends RecyclerView implements GestureDetecto
     } else {
       skipCount = paginateItemCount * direction;
     }
+    int pages = getAdapter().getItemCount() / skipCount;
+    int lastPage = skipCount * (pages - 1);
 
-    int scrollToPosition = lastScrollPosition + skipCount;
+    // Scroll to next position
+    int scrollToPosition = autoCorrectPosition(lastScrollPosition + skipCount, 0, lastPage);
     smoothScrollToPosition(scrollToPosition);
-    lastScrollPosition = scrollToPosition < 0 ? 0 : scrollToPosition;
+    lastScrollPosition = scrollToPosition;
+
     return false;
+  }
+
+  /**
+   * Keeps position within the min and max bounds
+   */
+  private int autoCorrectPosition(int position, int min, int max) {
+    if (position < min) {
+      return min;
+    } else if (position >= max) {
+      return max;
+    } else {
+      return position;
+    }
   }
 }
