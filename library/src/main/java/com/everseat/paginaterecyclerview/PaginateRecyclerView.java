@@ -204,15 +204,15 @@ public class PaginateRecyclerView extends RecyclerView implements GestureDetecto
     if (paginateItemCount == -1) {
       int averageChildSize = layoutManager.getAverageChildSize();
       int size = canScrollHorizontally ? getWidth() : getHeight();
-      skipCount = (size / averageChildSize) * direction;
+      skipCount = size / averageChildSize;
     } else {
-      skipCount = paginateItemCount * direction;
+      skipCount = paginateItemCount;
     }
-    int pages = getAdapter().getItemCount() / skipCount;
-    int lastPage = skipCount * (pages - 1);
 
     // Scroll to next position
-    int scrollToPosition = autoCorrectPosition(lastScrollPosition + skipCount, 0, lastPage);
+    int position = lastScrollPosition + (skipCount * direction);
+    int lastItemPosition = getAdapter().getItemCount() - 1;
+    int scrollToPosition = autoCorrectPosition(position, 0, lastItemPosition);
     smoothScrollToPosition(scrollToPosition);
     lastScrollPosition = scrollToPosition;
 
