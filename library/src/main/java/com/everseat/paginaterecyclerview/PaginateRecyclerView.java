@@ -17,6 +17,8 @@ public class PaginateRecyclerView extends RecyclerView implements GestureDetecto
   private int orientation;
 
   // View configs
+  private int initialDownX, initialDownY;
+  private int lastDownX, lastDownY;
   private int touchSlop;
   private int flingSlop;
 
@@ -89,6 +91,13 @@ public class PaginateRecyclerView extends RecyclerView implements GestureDetecto
   @Override
   public boolean onInterceptTouchEvent(MotionEvent e) {
     getParent().requestDisallowInterceptTouchEvent(true);
+
+    int action = MotionEventCompat.getActionMasked(e);
+    if (action == MotionEvent.ACTION_DOWN) {
+      initialDownX = lastDownX = (int) e.getX();
+      initialDownY = lastDownY = (int) e.getY();
+    }
+
     return super.onInterceptTouchEvent(e);
   }
 
@@ -154,19 +163,21 @@ public class PaginateRecyclerView extends RecyclerView implements GestureDetecto
   }
 
   @Override
-  public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+  public boolean onScroll(MotionEvent down, MotionEvent move, float distanceX, float distanceY) {
     boolean canScrollHorizontally = getLayoutManager().canScrollHorizontally();
     boolean canScrollVertically = getLayoutManager().canScrollVertically();
 
-    int dX = (int) distanceX;
-    int dY = (int) distanceY;
+    int dX = (int) (lastDownX - move.getX());
+    int dY = (int) (lastDownY - move.getY());
 
     if (canScrollHorizontally) {
       scrollBy(dX, 0);
+      lastDownX = (int) move.getX();
     }
 
     if (canScrollVertically) {
       scrollBy(0, dY);
+      lastDownY = (int) move.getY();
     }
     return false;
   }
