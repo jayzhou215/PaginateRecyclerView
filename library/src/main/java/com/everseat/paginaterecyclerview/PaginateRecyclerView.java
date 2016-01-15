@@ -96,8 +96,12 @@ public class PaginateRecyclerView extends RecyclerView {
 
   @Override
   public boolean onInterceptTouchEvent(MotionEvent e) {
-    initialTouchX = lastTouchX = (int) e.getX();
-    initialTouchY = lastTouchY = (int) e.getY();
+    getParent().requestDisallowInterceptTouchEvent(true);
+    int action = MotionEventCompat.getActionMasked(e);
+    if (action == MotionEvent.ACTION_DOWN) {
+      initialTouchX = lastTouchX = (int) e.getX();
+      initialTouchY = lastTouchY = (int) e.getY();
+    }
     return super.onInterceptTouchEvent(e);
   }
 
@@ -128,20 +132,22 @@ public class PaginateRecyclerView extends RecyclerView {
 
         final int x = (int) MotionEventCompat.getX(e, index);
         final int y = (int) MotionEventCompat.getY(e, index);
-        final int dx = lastTouchX - x;
-        final int dy = lastTouchY - y;
+        final int dx = lastTouchX - x; // Delta X
+        final int dy = lastTouchY - y; // Delta Y
+        final int mDx = Math.abs(dx);  // Magnitude of delta X
+        final int mDy = Math.abs(dy);  // Magnitude of delta Y
 
         velocityTracker.computeCurrentVelocity(1000, maxFlingVelocity);
         float xVeclocity = VelocityTrackerCompat.getXVelocity(velocityTracker, scrollPointerId);
         float yVelocity = VelocityTrackerCompat.getYVelocity(velocityTracker, scrollPointerId);
 
-        if (canScrollHorizontally && Math.abs(dx) > touchSlop) {
+        if (canScrollHorizontally && mDx > touchSlop) {
           scrollBy(dx, 0);
           shouldPage = Math.abs(xVeclocity) > velocitySlop;
           lastTouchX = x;
         }
 
-        if (canScrollVertically && Math.abs(dy) > touchSlop) {
+        if (canScrollVertically && mDy > touchSlop) {
           scrollBy(0, dy);
           shouldPage = Math.abs(yVelocity) > velocitySlop;
           lastTouchY = y;
