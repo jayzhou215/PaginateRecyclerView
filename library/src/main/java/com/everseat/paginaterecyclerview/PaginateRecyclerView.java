@@ -3,34 +3,27 @@ package com.everseat.paginaterecyclerview;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v4.view.MotionEventCompat;
-import android.support.v4.view.VelocityTrackerCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 
 /**
  * A RecyclerView that can paginate its content
  */
-public class PaginateRecyclerView extends RecyclerView {
-  private int initialTouchX, initialTouchY;
-  private int lastTouchX, lastTouchY;
-  private int scrollPointerId;
+public class PaginateRecyclerView extends RecyclerView implements GestureDetector.OnGestureListener {
   private int orientation;
 
   // View configs
-  private int maxFlingVelocity;
-  private int velocitySlop;
   private int touchSlop;
+  private int flingSlop;
 
   private int paginateItemCount = -1;
   private int lastScrollPosition;
-  private VelocityTracker velocityTracker;
-  private boolean shouldPage;
   private PaginateLayoutManager layoutManager;
+  private GestureDetector gestureDetector;
 
   private static final String TAG = "PaginateRecyclerView";
 
@@ -51,9 +44,8 @@ public class PaginateRecyclerView extends RecyclerView {
 
   private void init(Context context) {
     ViewConfiguration vc = ViewConfiguration.get(context);
-    velocityTracker = VelocityTracker.obtain();
-    maxFlingVelocity = getMaxFlingVelocity();
-    velocitySlop = 200;
+    flingSlop = 1000;
+    gestureDetector = new GestureDetector(context, this);
     touchSlop = vc.getScaledTouchSlop();
   }
 
@@ -97,101 +89,17 @@ public class PaginateRecyclerView extends RecyclerView {
   @Override
   public boolean onInterceptTouchEvent(MotionEvent e) {
     getParent().requestDisallowInterceptTouchEvent(true);
-    int action = MotionEventCompat.getActionMasked(e);
-    if (action == MotionEvent.ACTION_DOWN) {
-      initialTouchX = lastTouchX = (int) e.getX();
-      initialTouchY = lastTouchY = (int) e.getY();
-    }
     return super.onInterceptTouchEvent(e);
   }
 
   @Override
   public boolean onTouchEvent(MotionEvent e) {
-    final int action = MotionEventCompat.getActionMasked(e);
-
-    final boolean canScrollHorizontally = getLayoutManager().canScrollHorizontally();
-    final boolean canScrollVertically = getLayoutManager().canScrollVertically();
-
+    gestureDetector.onTouchEvent(e);
+    int action = MotionEventCompat.getActionMasked(e);
     switch (action) {
-      case MotionEvent.ACTION_DOWN: {
-        shouldPage = false;
-        initialTouchX = lastTouchX = (int) e.getX();
-        initialTouchY = lastTouchY = (int) e.getY();
-        scrollPointerId = MotionEventCompat.getPointerId(e, 0);
-      } break;
-      case MotionEvent.ACTION_MOVE: {
-        velocityTracker.addMovement(e);
-
-        // Get pointer index
-        final int index = MotionEventCompat.findPointerIndex(e, scrollPointerId);
-        if (index < 0) {
-          Log.e(TAG, "Error processing scroll; pointer index for id " +
-              scrollPointerId + " not found. Did any MotionEvents get skipped?");
-          return false;
-        }
-
-        final int x = (int) MotionEventCompat.getX(e, index);
-        final int y = (int) MotionEventCompat.getY(e, index);
-        final int dx = lastTouchX - x; // Delta X
-        final int dy = lastTouchY - y; // Delta Y
-        final int mDx = Math.abs(dx);  // Magnitude of delta X
-        final int mDy = Math.abs(dy);  // Magnitude of delta Y
-
-        velocityTracker.computeCurrentVelocity(1000, maxFlingVelocity);
-        float xVeclocity = VelocityTrackerCompat.getXVelocity(velocityTracker, scrollPointerId);
-        float yVelocity = VelocityTrackerCompat.getYVelocity(velocityTracker, scrollPointerId);
-
-        if (canScrollHorizontally && mDx > touchSlop) {
-          scrollBy(dx, 0);
-          shouldPage = Math.abs(xVeclocity) > velocitySlop;
-          lastTouchX = x;
-        }
-
-        if (canScrollVertically && mDy > touchSlop) {
-          scrollBy(0, dy);
-          shouldPage = Math.abs(yVelocity) > velocitySlop;
-          lastTouchY = y;
-        }
-      } break;
-      case MotionEvent.ACTION_UP: {
-        // Get pointer index
-        final int index = MotionEventCompat.findPointerIndex(e, scrollPointerId);
-        if (index < 0) {
-          Log.e(TAG, "Error processing scroll; pointer index for id " +
-              scrollPointerId + " not found. Did any MotionEvents get skipped?");
-          return false;
-        }
-
-        final int x = (int) MotionEventCompat.getX(e, index);
-        final int y = (int) MotionEventCompat.getY(e, index);
-        int dx = initialTouchX - x;
-        int dy = initialTouchY - y;
-
-        int direction = 0;
-        if (canScrollHorizontally && Math.abs(dx) > touchSlop) {
-          direction = dx / Math.abs(dx);
-        }
-        if (canScrollVertically && Math.abs(dy) > touchSlop) {
-          direction = dy / Math.abs(dy);
-        }
-
-        int scrollToPosition;
-        if (shouldPage) {
-          int skipCount;
-          if (paginateItemCount == -1) {
-            int averageChildSize = layoutManager.getAverageChildSize();
-            skipCount = (getWidth() / averageChildSize) * direction;
-          } else {
-            skipCount = paginateItemCount * direction;
-          }
-          scrollToPosition = (lastScrollPosition + skipCount);
-        } else {
-          scrollToPosition = lastScrollPosition;
-        }
-
-        smoothScrollToPosition(scrollToPosition);
-        lastScrollPosition = scrollToPosition;
-      } break;
+      case MotionEvent.ACTION_UP:
+        smoothScrollToPosition(lastScrollPosition);
+        break;
     }
     return true;
   }
@@ -226,5 +134,72 @@ public class PaginateRecyclerView extends RecyclerView {
     int height = getHeight();
     int y = itemView.getTop() - ((height / 2) - (itemView.getHeight() / 2));
     smoothScrollBy(0, y);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // GestureDetector.OnGestureListener methods
+  /////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  public boolean onDown(MotionEvent e) {
+    return false;
+  }
+
+  @Override
+  public void onShowPress(MotionEvent e) {/* No op */}
+
+  @Override
+  public boolean onSingleTapUp(MotionEvent e) {
+    return false;
+  }
+
+  @Override
+  public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+    boolean canScrollHorizontally = getLayoutManager().canScrollHorizontally();
+    boolean canScrollVertically = getLayoutManager().canScrollVertically();
+
+    int dX = (int) distanceX;
+    int dY = (int) distanceY;
+
+    if (canScrollHorizontally) {
+      scrollBy(dX, 0);
+    }
+
+    if (canScrollVertically) {
+      scrollBy(0, dY);
+    }
+    return false;
+  }
+
+  @Override
+  public void onLongPress(MotionEvent e) {/* No op */}
+
+  @Override
+  public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+    int skipCount;
+
+    boolean canScrollHorizontally = getLayoutManager().canScrollHorizontally();
+    boolean canScrollVertically = getLayoutManager().canScrollVertically();
+
+    int direction = 0;
+    if (canScrollHorizontally && Math.abs(velocityX) > flingSlop) {
+      direction = velocityX < 0 ? 1 : -1;
+    }
+    if (canScrollVertically && Math.abs(velocityY) > flingSlop) {
+      direction = velocityY < 0 ? 1 : -1;
+    }
+
+    if (paginateItemCount == -1) {
+      int averageChildSize = layoutManager.getAverageChildSize();
+      int size = canScrollHorizontally ? getWidth() : getHeight();
+      skipCount = (size / averageChildSize) * direction;
+    } else {
+      skipCount = paginateItemCount * direction;
+    }
+
+    int scrollToPosition = lastScrollPosition + skipCount;
+    smoothScrollToPosition(scrollToPosition);
+    lastScrollPosition = scrollToPosition < 0 ? 0 : scrollToPosition;
+    return false;
   }
 }
